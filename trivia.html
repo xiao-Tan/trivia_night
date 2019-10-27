@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="trivia.css">
+    <title>Trivia Night</title>
+</head>
+
+<body>
+    <br>
+    <div class="container">
+        <button type="button" class="btn btn-link" id="new_questions">Press here to restart ^_^</button>
+        <h1 class="text-center">Trivia Night</h1>
+        <p id="point">Points earned: 0</p>
+        <div id="question_block"></div>
+        <div id="score_block"></div>
+    </div>
+
+    <script>
+        function generate_question() {
+            var point = 0;
+            $.get("https://opentdb.com/api.php?amount=10&type=multiple", function (res) {
+                console.log(res);
+                for (var i = 0; i < 9; i++) {
+                    var type_html = " ";
+                    type_html += "<div class='one_question " + i + "'>";
+                    type_html += "<div id='question" + i + "'>";
+                    type_html += '<p>Question: ' + res.results[i].question + '</p>';
+                    var correct_answer = [];
+                    correct_answer.push(res.results[i].correct_answer);
+                    var option_answer = correct_answer.concat(res.results[i].incorrect_answers);
+                    shuffle(option_answer);
+                    type_html += '<form action="/">'
+                    for (var j = 0; j < option_answer.length; j++) {
+                        type_html += '<input type="radio" class="answer' + j + '" name="answer' + i + '" value="' + option_answer[j] + '"><span class="answer' + j + '">' + option_answer[j] + '</span><br>';
+                    }
+                    type_html += '<p class="answer_button text-center"><input class="btn btn-dark" type="button" value="Answer" id="submit' + i + '"></p>'
+                    type_html += '</form>'
+                    type_html += "</div>"
+                    type_html += "<div class='score_block text-center' id='score" + i + "'>";
+                    if (res.results[i].difficulty == "easy") {
+                        type_html += '<button type="button" class="point_number btn btn-link">100</button>';
+                        type_html += '<p>(Easy)</p>';
+                    }
+                    else if (res.results[i].difficulty == "medium") {
+                        type_html += '<button type="button" class=" point_number btn btn-link">200</button>';
+                        type_html += '<p>(Medium)</p>';
+                    }
+                    else if (res.results[i].difficulty == "hard") {
+                        type_html += '<button type="button" class=" point_number btn btn-link">300</button>';
+                        type_html += '<p>(Hard)</p>';
+                    }
+                    type_html += "<p>Category: " + res.results[i].category + "</p>"
+                    type_html += "</div>"
+                    type_html += "</div>"
+                    $('#question_block').append(type_html);
+                }
+
+                //click score to show ralative question
+                $(document).on('click', '.score_block', function () {
+                    var score_id = this.id;
+                    $('#' + score_id).hide();
+                    var question_index = score_id.match(/\d+/)[0];
+                    var question_id = "question" + question_index;
+                    $('#' + question_id).css("display", "block");
+                    $('.' + question_index).css("background-color", "rgb(102, 196, 240, 0.8)");
+                    // choose answer
+                    var submit_id = "submit" + question_index;
+                    $('#' + submit_id).click(function () {
+                        var answer_name = "answer" + question_index;                       
+                        var answerValue = $("input[name=" + answer_name + "]:checked").val();
+                        // var answer_class = $("input[name=" + answer_name + "]:checked").attr('class');
+                        // console.log(answer_class);
+                        if (!answerValue) {
+                            alert("You must choose one answer");
+                        }
+                        else if (answerValue == res.results[question_index].correct_answer) {
+
+                            // $('#question' + question_id + '.' + answer_class).css("color","green");
+
+                            alert("You are right");
+                            if (res.results[question_index].difficulty == "easy") {
+                                point += 100;
+                            }
+                            if (res.results[question_index].difficulty == "medium") {
+                                point += 200;
+                            }
+                            if (res.results[question_index].difficulty == "hard") {
+                                point += 300;
+                            }
+                            $('#' + submit_id).prop('disabled', true);
+                            $('.' + question_index).css("background-color", "rgb(154, 177, 71, 0.8)");
+                            $('#' + question_id).css('color','white');
+                        }
+                        else if (answerValue != res.results[question_index].correct_answer) {
+                            // $('#question' + question_id + '.' + answer_class).css("color","red");
+                            alert("You are wrong, correct answer is " + res.results[question_index].correct_answer);
+                            $('#' + submit_id).prop('disabled', true);
+                            $('.' + question_index).css("background-color", "rgb(238, 62, 62, 0.8)");
+                            $('#' + question_id).css('color','white');
+                        }
+                        
+                        $('#point').html('<p id="point">Points earned: ' + point + '</p>');
+
+                    })
+                })
+            })
+        }
+        generate_question();
+
+        //get radio value
+        $(document).on("click", "input[type='button']", function () {
+            var answerValue = $()
+        })
+
+
+        //shuffle question options
+        function shuffle(array) {
+            var j, x, i;
+            for (i = array.length - 1; i > 0; i--) {
+                j = Math.floor(Math.random() * (i + 1));
+                x = array[i];
+                array[i] = array[j];
+                array[j] = x;
+            }
+            return array;
+        }
+
+        //restart game
+        $('#new_questions').click(function () {
+            location.reload();
+        });
+
+    </script>
+</body>
+
+</html>
